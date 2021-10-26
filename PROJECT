@@ -1,0 +1,9 @@
+domain: openshift.org
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: cert-manager-operator
+repo: github.com/openshift/cert-manager-operator
+version: "3"

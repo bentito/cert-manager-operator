@@ -6,6 +6,7 @@ APP_NAME?=cert-manager-operator
 IMAGE_REGISTRY?=registry.svc.ci.openshift.org
 
 CONTROLLER_GEN_VERSION=v0.6.0
+VERSION?=4.9.0
 
 BUNDLE_IMAGE_NAME=cert-manager-operator-bundle
 BUNDLE_IMAGE_PATH=$(IMAGE_REGISTRY)/$(BUNDLE_IMAGE_NAME)
@@ -18,6 +19,13 @@ MANIFEST_SOURCE = https://github.com/jetstack/cert-manager/releases/download/v1.
 OPERATOR_SDK_VERSION?=v1.12.0
 OPERATOR_SDK?=$(PERMANENT_TMP_GOPATH)/bin/operator-sdk-$(OPERATOR_SDK_VERSION)
 OPERATOR_SDK_DIR=$(dir $(OPERATOR_SDK))
+
+# Image URL to use all building/pushing image targets
+IMG ?= controller:latest
+
+KUSTOMIZE = $(shell pwd)/bin/kustomize
+kustomize: ## Download kustomize locally if necessary.
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
 
 # Include the library makefiles
 include $(addprefix ./vendor/github.com/openshift/build-machinery-go/make/, \
@@ -86,6 +94,13 @@ local-clean:
 operator-build-bundle:
 	$(RUNTIME) build -t $(BUNDLE_IMAGE_PATH):$(BUNDLE_IMAGE_TAG) -f ./bundle/bundle.Dockerfile ./bundle
 .PHONY: operator-build-bundle
+
+.PHONY: bundle
+bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
+	operator-sdk generate kustomize manifests -q
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	operator-sdk bundle validate ./bundle
 
 operator-push-bundle: operator-build-bundle
 	$(RUNTIME) push $(BUNDLE_IMAGE_PATH):$(BUNDLE_IMAGE_TAG)
