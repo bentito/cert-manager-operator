@@ -92,7 +92,7 @@ local-clean:
 .PHONY: local-clean
 
 operator-build-bundle:
-	$(RUNTIME) build -t $(BUNDLE_IMAGE_PATH):$(BUNDLE_IMAGE_TAG) -f ./bundle/bundle.Dockerfile ./bundle
+	$(RUNTIME) build -t $(BUNDLE_IMAGE_PATH):$(BUNDLE_IMAGE_TAG) -f ./bundle.Dockerfile .
 .PHONY: operator-build-bundle
 
 .PHONY: bundle
